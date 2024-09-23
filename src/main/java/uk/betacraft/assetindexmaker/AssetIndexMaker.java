@@ -21,7 +21,7 @@ public class AssetIndexMaker {
     public static final String VERSION = "1.0.0";
     static final File SELF; // the running jar file
 
-    static String custom_url_base = null;
+    static String customUrlBase = null;
     static File exportDestination = new File("assets_missing");
     static File workDirectory = new File(".");
     static File outputTarget = new File("index.json");
@@ -52,7 +52,7 @@ public class AssetIndexMaker {
             System.out.println("--resources " + mapToResources);
             System.out.println("--virtual " + virtual);
             System.out.println("--testAvailability " + testAvailability);
-            System.out.println("--customUrl " + custom_url_base);
+            System.out.println("--customUrl " + customUrlBase);
             System.out.println("--directory " + workDirectory.getPath());
             System.out.println("--output " + outputTarget.getPath());
             System.out.println("--asObjects " + exportAsObjects);
@@ -72,7 +72,7 @@ public class AssetIndexMaker {
             } else if (arg.equals("--testAvailability")) {
                 testAvailability = true;
             } else if (arg.startsWith("--customUrl=")) {
-                custom_url_base = arg.substring("--customUrl=".length());
+                customUrlBase = arg.substring("--customUrl=".length());
             } else if (arg.startsWith("--directory=")) {
                 workDirectory = new File(arg.substring("--directory=".length()));
             } else if (arg.startsWith("--output=")) {
@@ -127,7 +127,7 @@ public class AssetIndexMaker {
                 }
 
                 if (sha1 == null) {
-                    System.out.println("Could not read SHA1, skipping: " + key);
+                    System.err.println("Could not read SHA1, skipping: " + key);
                     return;
                 }
 
@@ -165,10 +165,10 @@ public class AssetIndexMaker {
         if (response.successful())
             return;
 
-        System.out.println("Availability test FAILED for: " + key);
+        System.err.println("Availability test FAILED for: " + key);
 
-        if (custom_url_base != null)
-            assetObject.put("custom_url", custom_url_base + "/" + sha1.substring(0, 2) + "/" + sha1);
+        if (customUrlBase != null)
+            assetObject.put("custom_url", customUrlBase + "/" + sha1.substring(0, 2) + "/" + sha1);
 
         if (exportMissing)
             exportMissing(key, sha1, path);
@@ -186,7 +186,7 @@ public class AssetIndexMaker {
 
             Files.copy(path, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (Throwable t) {
-            System.out.println("Asset export FAILED for: " + key);
+            System.err.println("Asset export FAILED for: " + key);
             t.printStackTrace();
         }
     }
