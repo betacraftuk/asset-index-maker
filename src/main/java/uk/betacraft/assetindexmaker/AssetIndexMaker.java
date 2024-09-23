@@ -18,7 +18,7 @@ import java.security.MessageDigest;
 import java.util.stream.Stream;
 
 public class AssetIndexMaker {
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "1.0.1";
     static final File SELF; // the running jar file
 
     static String customUrlBase = null;
