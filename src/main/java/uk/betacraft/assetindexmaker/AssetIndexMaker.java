@@ -44,7 +44,26 @@ public class AssetIndexMaker {
     }
 
     public static void main(String[] args) {
-        // read arguments
+        readArguments(args);
+
+        System.out.println("Asset Index Maker v" + VERSION + " loaded");
+        System.out.println("--debug " + debug);
+        if (debug) {
+            System.out.println("--resources " + mapToResources);
+            System.out.println("--virtual " + virtual);
+            System.out.println("--testAvailability " + testAvailability);
+            System.out.println("--customUrl " + custom_url_base);
+            System.out.println("--directory " + workDirectory.getPath());
+            System.out.println("--output " + outputTarget.getPath());
+            System.out.println("--asObjects " + exportAsObjects);
+            System.out.println("--exportMissing " + exportMissing);
+            System.out.println("--exportMissing " + exportDestination.getPath());
+        }
+
+        generateIndex();
+    }
+
+    private static void readArguments(String[] args) {
         for (String arg : args) {
             if (arg.equals("--resources")) {
                 mapToResources = true;
@@ -75,22 +94,6 @@ public class AssetIndexMaker {
                 debug = true;
             }
         }
-
-        System.out.println("Asset Index Maker v" + VERSION + " loaded");
-        System.out.println("--debug " + debug);
-        if (debug) {
-            System.out.println("--resources " + mapToResources);
-            System.out.println("--virtual " + virtual);
-            System.out.println("--testAvailability " + testAvailability);
-            System.out.println("--customUrl " + custom_url_base);
-            System.out.println("--directory " + workDirectory.getPath());
-            System.out.println("--output " + outputTarget.getPath());
-            System.out.println("--asObjects " + exportAsObjects);
-            System.out.println("--exportMissing " + exportMissing);
-            System.out.println("--exportMissing " + exportDestination.getPath());
-        }
-
-        generateIndex();
     }
 
     private static void generateIndex() {
