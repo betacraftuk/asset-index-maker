@@ -15,7 +15,7 @@ java -jar asset-index-maker.jar [arguments ...]
 
 `--output=[asset index json path]`
 - if provided, will output the asset index json to that path
-- if not provided, will default to `index.json`
+- if not provided, will default to `index.json` relative to current working directory
 
 `--testAvailability`
 - if provided, will test assets for being downloadable from the official Mojang server
