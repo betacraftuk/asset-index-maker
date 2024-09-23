@@ -1,0 +1,18 @@
+# IntellIJ IDEs
+.idea
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Eclipse project files
+.classpath
+.project
+.settings
+
+# Outputs
+bin
+build
+
+# OS-specific
+.DS_Store
+desktop.ini
