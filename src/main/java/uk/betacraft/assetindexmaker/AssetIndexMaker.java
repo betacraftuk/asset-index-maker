@@ -13,6 +13,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.util.stream.Stream;
@@ -23,7 +24,7 @@ public class AssetIndexMaker {
 
     static String customUrlBase = null;
     static File exportDestination = new File("assets_missing");
-    static File workDirectory = new File(".");
+    static File workDirectory = Paths.get("").toFile();
     static File outputTarget = new File("index.json");
 
     static boolean virtual = false;
@@ -32,12 +33,13 @@ public class AssetIndexMaker {
     static boolean testAvailability = false;
     static boolean exportMissing = false;
     static boolean exportAsObjects = false;
+    static boolean exportAll = false;
 
     static boolean debug = false;
 
     static {
         try {
-            SELF = new File(AssetIndexMaker.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            SELF = new File(AssetIndexMaker.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toPath().toAbsolutePath();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -53,6 +55,7 @@ public class AssetIndexMaker {
             System.out.println("--virtual " + virtual);
             System.out.println("--testAvailability " + testAvailability);
             System.out.println("--customUrl " + customUrlBase);
+            System.out.println("--exportAll " + exportAll);
             System.out.println("--directory " + workDirectory.getPath());
             System.out.println("--output " + outputTarget.getPath());
             System.out.println("--asObjects " + exportAsObjects);
@@ -69,6 +72,8 @@ public class AssetIndexMaker {
                 mapToResources = true;
             } else if (arg.equals("--virtual")) {
                 virtual = true;
+            } else if (arg.equals("--exportAll")) {
+                exportAll = true;
             } else if (arg.equals("--testAvailability")) {
                 testAvailability = true;
             } else if (arg.startsWith("--customUrl=")) {
@@ -106,19 +111,22 @@ public class AssetIndexMaker {
 
                 if (f.isDirectory() ||
                         // ignore self
-                        path.compareTo(SELF.toPath()) == 0 ||
+                        path.toAbsolutePath().compareTo(SELF) == 0 ||
                         path.compareTo(outputTarget.toPath()) == 0 ||
+                        // ignore work dir root
+                        path.compareTo(workDirectory.toPath()) == 0 ||
                         // ignore export destination if it's in working directory
                         pathString.startsWith(exportDestination.toPath().toString()) ||
                         // ignore OS-specific junk
-                        pathString.contains(".DS_Store") ||
-                        pathString.contains("desktop.ini")
+                        pathString.endsWith(".DS_Store") ||
+                        pathString.endsWith("desktop.ini")
                 ) {
                     return;
                 }
 
                 String sha1 = getSHA1(f);
                 String key;
+                long size = f.length();
 
                 try {
                     key = URLDecoder.decode(workDirectory.toURI().relativize(path.toUri()).toString(), "UTF-8");
@@ -133,22 +141,25 @@ public class AssetIndexMaker {
 
                 JSONObject assetObject = new JSONObject();
                 assetObject.put("hash", sha1);
-                assetObject.put("size", f.length());
+                assetObject.put("size", size);
 
                 if (testAvailability)
                     testAvailability(key, sha1, path, assetObject);
+
+                if (exportAll)
+                    export(key, sha1, path);
 
                 objects.put(key, assetObject);
             });
 
             JSONObject assetIndex = new JSONObject();
+            assetIndex.put("objects", objects);
+
             if (mapToResources)
                 assetIndex.put("map_to_resources", true);
 
             if (virtual)
                 assetIndex.put("virtual", true);
-
-            assetIndex.put("objects", objects);
 
             String json = assetIndex.toString(4);
 
@@ -160,7 +171,8 @@ public class AssetIndexMaker {
 
     private static void testAvailability(String key, String sha1, Path path, JSONObject assetObject) {
         WebData response = RequestUtil.pingGET(
-                new Request().setUrl("https://resources.download.minecraft.net/" + sha1.substring(0, 2) + "/" + sha1));
+                new Request().setUrl("https://resources.download.minecraft.net/" + sha1.substring(0, 2) + "/" + sha1)
+        );
 
         if (response.successful())
             return;
@@ -170,11 +182,11 @@ public class AssetIndexMaker {
         if (customUrlBase != null)
             assetObject.put("url", customUrlBase + "/" + sha1.substring(0, 2) + "/" + sha1);
 
-        if (exportMissing)
-            exportMissing(key, sha1, path);
+        if (exportMissing && !exportAll)
+            export(key, sha1, path);
     }
 
-    private static void exportMissing(String key, String sha1, Path path) {
+    private static void export(String key, String sha1, Path path) {
         File destination;
         if (exportAsObjects)
             destination = new File(exportDestination, sha1.substring(0, 2) + "/" + sha1);
