@@ -168,7 +168,7 @@ public class AssetIndexMaker {
         System.err.println("Availability test FAILED for: " + key);
 
         if (customUrlBase != null)
-            assetObject.put("custom_url", customUrlBase + "/" + sha1.substring(0, 2) + "/" + sha1);
+            assetObject.put("url", customUrlBase + "/" + sha1.substring(0, 2) + "/" + sha1);
 
         if (exportMissing)
             exportMissing(key, sha1, path);

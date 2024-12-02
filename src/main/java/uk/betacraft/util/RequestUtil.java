@@ -1,5 +1,6 @@
 package uk.betacraft.util;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -31,7 +32,7 @@ public class RequestUtil {
             }
 
             return new WebData(null, http);
-        } catch (javax.net.ssl.SSLHandshakeException e) {
+        } catch (SSLHandshakeException e) {
             e.printStackTrace();
             return new WebData(null, -2);
         } catch (Throwable t) {
