@@ -23,9 +23,11 @@ public class AssetIndexMaker {
     static final File SELF; // the running jar file
 
     static String customUrlBase = null;
+    static String downloadUrlBase = "";
     static File exportDestination = new File("assets_missing");
     static File workDirectory = Paths.get("").toFile();
     static File outputTarget = new File("index.json");
+    static File snippetOutputTarget = new File("snippet.json");
 
     static boolean virtual = false;
     static boolean mapToResources = false;
@@ -56,8 +58,10 @@ public class AssetIndexMaker {
             System.out.println("--testAvailability " + testAvailability);
             System.out.println("--customUrl " + customUrlBase);
             System.out.println("--exportAll " + exportAll);
+            System.out.println("--downloadUrl " + downloadUrlBase);
             System.out.println("--directory " + workDirectory.getPath());
             System.out.println("--output " + outputTarget.getPath());
+            System.out.println("--snippet " + snippetOutputTarget.getPath());
             System.out.println("--asObjects " + exportAsObjects);
             System.out.println("--exportMissing " + exportMissing);
             System.out.println("--exportMissing " + exportDestination.getPath());
@@ -78,10 +82,14 @@ public class AssetIndexMaker {
                 testAvailability = true;
             } else if (arg.startsWith("--customUrl=")) {
                 customUrlBase = arg.substring("--customUrl=".length());
+            } else if (arg.startsWith("--downloadUrl=")) {
+                downloadUrlBase = arg.substring("--downloadUrl=".length());
             } else if (arg.startsWith("--directory=")) {
                 workDirectory = new File(arg.substring("--directory=".length()));
             } else if (arg.startsWith("--output=")) {
                 outputTarget = new File(arg.substring("--output=".length()));
+            } else if (arg.startsWith("--snippet=")) {
+                snippetOutputTarget = new File(arg.substring("--snippet=".length()));
             } else if (arg.startsWith("--exportMissing")) {
                 exportMissing = true;
 
@@ -101,6 +109,7 @@ public class AssetIndexMaker {
         }
     }
 
+    private static long totalSize = 0;
     private static void generateIndex() {
         try (Stream<Path> walk = Files.walk(workDirectory.toPath(), 10)) {
             JSONObject objects = new JSONObject();
@@ -113,6 +122,7 @@ public class AssetIndexMaker {
                         // ignore self
                         path.toAbsolutePath().compareTo(SELF) == 0 ||
                         path.compareTo(outputTarget.toPath()) == 0 ||
+                        path.compareTo(snippetOutputTarget.toPath()) == 0 ||
                         // ignore work dir root
                         path.compareTo(workDirectory.toPath()) == 0 ||
                         // ignore export destination if it's in working directory
@@ -149,6 +159,7 @@ public class AssetIndexMaker {
                 if (exportAll)
                     export(key, sha1, path);
 
+                totalSize += size;
                 objects.put(key, assetObject);
             });
 
@@ -164,6 +175,17 @@ public class AssetIndexMaker {
             String json = assetIndex.toString(4);
 
             Files.write(outputTarget.toPath(), json.getBytes(StandardCharsets.UTF_8));
+
+            JSONObject assetIndexSnippet = new JSONObject();
+            String id = outputTarget.getName().replace(".json", "");
+            assetIndexSnippet.put("id", id);
+            assetIndexSnippet.put("sha1", getSHA1(outputTarget));
+            assetIndexSnippet.put("size", outputTarget.length());
+            assetIndexSnippet.put("totalSize", totalSize);
+            assetIndexSnippet.put("url", downloadUrlBase + id + ".json");
+            String snippetJson = assetIndexSnippet.toString(4);
+
+            Files.write(snippetOutputTarget.toPath(), snippetJson.getBytes(StandardCharsets.UTF_8));
         } catch (Throwable t) {
             t.printStackTrace();
         }
