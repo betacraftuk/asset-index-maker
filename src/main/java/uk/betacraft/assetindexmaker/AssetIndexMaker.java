@@ -109,7 +109,6 @@ public class AssetIndexMaker {
         }
     }
 
-    private static long totalSize = 0;
     private static void generateIndex() {
         try (Stream<Path> walk = Files.walk(workDirectory.toPath(), 10)) {
             JSONObject objects = new JSONObject();
@@ -159,7 +158,6 @@ public class AssetIndexMaker {
                 if (exportAll)
                     export(key, sha1, path);
 
-                totalSize += size;
                 objects.put(key, assetObject);
             });
 
@@ -181,6 +179,13 @@ public class AssetIndexMaker {
             assetIndexSnippet.put("id", id);
             assetIndexSnippet.put("sha1", getSHA1(outputTarget));
             assetIndexSnippet.put("size", outputTarget.length());
+
+            long totalSize = 0L;
+            for (String key : objects.keySet()) {
+                JSONObject obj = objects.getJSONObject(key);
+                totalSize += obj.getLong("size");
+            }
+
             assetIndexSnippet.put("totalSize", totalSize);
             assetIndexSnippet.put("url", downloadUrlBase + id + ".json");
             String snippetJson = assetIndexSnippet.toString(4);
