@@ -40,9 +40,10 @@ java -jar asset-index-maker.jar [arguments ...]
 
 `--customUrl=[url prefix]`
 - if provided, will add `url` property to each asset which is not downloadable from the Mojang server
+- custom assets will be saved in a `"custom"` json object, rather than `"objects"` json object where only assets residing on Mojang CDN are allowed to be 
 - example download url: `[url prefix]/02/022e48005197b37f0caa53e8051c8a266eeae15e`
 - requires `--testAvailability`
-- almost all launchers don't support this property
+- almost all launchers don't support the `"custom"` json object, but it is necessary to separate custom assets into a different list in order for unsupporting launchers to not fail when launching
 
 `--downloadUrl=[url prefix]`
 - url directory where the asset index json is expected to be located, e.g. `https://files.betacraft.uk/launcher/v2/assets/indexes/a1.2.0.json`
