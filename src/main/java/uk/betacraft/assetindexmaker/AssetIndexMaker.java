@@ -19,7 +19,7 @@ import java.security.MessageDigest;
 import java.util.stream.Stream;
 
 public class AssetIndexMaker {
-    public static final String VERSION = "1.0.3";
+    public static final String VERSION = "1.0.4";
     static final Path SELF; // the running jar file
 
     static String customUrlBase = null;
@@ -129,7 +129,8 @@ public class AssetIndexMaker {
                         pathString.startsWith(exportDestination.toPath().toString()) ||
                         // ignore OS-specific junk
                         pathString.endsWith(".DS_Store") ||
-                        pathString.endsWith("desktop.ini")
+                        pathString.endsWith("desktop.ini") ||
+                        path.toFile().getName().startsWith("._")
                 ) {
                     return;
                 }
