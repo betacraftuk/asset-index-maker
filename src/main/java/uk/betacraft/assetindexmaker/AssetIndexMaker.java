@@ -112,6 +112,7 @@ public class AssetIndexMaker {
     private static void generateIndex() {
         try (Stream<Path> walk = Files.walk(workDirectory.toPath(), 10)) {
             JSONObject objects = new JSONObject();
+            JSONObject customObjects = new JSONObject();
 
             walk.forEach(path -> {
                 File f = path.toFile();
@@ -152,17 +153,25 @@ public class AssetIndexMaker {
                 assetObject.put("hash", sha1);
                 assetObject.put("size", size);
 
+                boolean available;
                 if (testAvailability)
-                    testAvailability(key, sha1, path, assetObject);
+                    available = testAvailability(key, sha1, path, assetObject);
+                else
+                    available = true;
 
                 if (exportAll)
                     export(key, sha1, path);
 
-                objects.put(key, assetObject);
+                if (available)
+                    objects.put(key, assetObject);
+                else
+                    customObjects.put(key, assetObject);
             });
 
             JSONObject assetIndex = new JSONObject();
             assetIndex.put("objects", objects);
+            if (!customObjects.isEmpty())
+                assetIndex.put("custom", customObjects);
 
             if (mapToResources)
                 assetIndex.put("map_to_resources", true);
@@ -196,13 +205,13 @@ public class AssetIndexMaker {
         }
     }
 
-    private static void testAvailability(String key, String sha1, Path path, JSONObject assetObject) {
+    private static boolean testAvailability(String key, String sha1, Path path, JSONObject assetObject) {
         WebData response = RequestUtil.pingGET(
                 new Request().setUrl("https://resources.download.minecraft.net/" + sha1.substring(0, 2) + "/" + sha1)
         );
 
         if (response.successful())
-            return;
+            return true;
 
         System.err.println("Availability test FAILED for: " + key);
 
@@ -211,6 +220,8 @@ public class AssetIndexMaker {
 
         if (exportMissing && !exportAll)
             export(key, sha1, path);
+
+        return false;
     }
 
     private static void export(String key, String sha1, Path path) {
